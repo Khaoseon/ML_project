@@ -1,0 +1,14 @@
+# Keep pip on the CUDA 12.8 builds installed separately (see README).
+torch==2.10.0+cu128
+torchvision==0.25.0+cu128
+
+# Inference and screenshot rendering at vlm-em commit 595964a.
+ms-swift==4.4.1
+transformers==5.5.0
+accelerate==1.14.0
+peft==0.18.1
+huggingface-hub==1.27.0
+safetensors==0.8.0
+qwen-vl-utils==0.0.14
+Pillow==11.3.0
+playwright==1.62.0

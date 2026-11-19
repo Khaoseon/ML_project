@@ -1,0 +1,38 @@
+# Python and notebook artifacts
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+.venv/
+venv/
+env/
+.conda/
+*.egg-info/
+
+# Local credentials
+.env
+.env.*
+!.env.example
+secrets/
+*.pem
+*.key
+
+# Checkpoints and generated artifacts
+.cache/
+models/
+checkpoints/
+*.safetensors
+*.ckpt
+*.pt
+*.pth
+*.bin
+*.gguf
+screenshots/
+logs/
+*.log
+results/
+outputs/
+runs/
+wandb/
