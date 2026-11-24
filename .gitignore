@@ -36,3 +36,5 @@ results/
 outputs/
 runs/
 wandb/
+
+/data/
