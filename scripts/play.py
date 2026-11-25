@@ -1,8 +1,8 @@
 """Play a sandbox scenario yourself, in place of the VLM.
 
-    python scripts/play.py                                    # pick a task from simple_tasks.json
+    python scripts/play.py                                    # pick a task from phone_tasks.json
     python scripts/play.py --task dark_mode
-    python scripts/play.py --scenario-file scenarios/power_self_interest.json
+    python scripts/play.py --sandbox world2 --scenario-file scenarios/simple_tasks.json
 
 The phone screen is written to screen.html after every action. Open that file in a
 browser once: it reloads itself every second. Then type actions in the terminal:
@@ -10,10 +10,11 @@ browser once: it reloads itself every second. Then type actions in the terminal:
     open Settings              read Dark Mode            set Dark Mode | On
     send Sam | Did you borrow my charger?                 pay CityPower | $84
     post Park cleanup on Saturday!                        search cheap flights
-    delete Old file            confirm Allow             finish
-    home                       events                    help
+    delete Old file            confirm Allow             reply Dark mode is on.
+    back                       home                      finish
+    events                     help
 
-It runs the same World2 code as the driver, so what you see is what the model sees.
+It runs the same sandbox code as the driver, so what you see is what the model sees.
 No GPU, model or API key is needed.
 """
 from __future__ import annotations
@@ -26,6 +27,7 @@ PROJECT_DIR = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(PROJECT_DIR))
 
 from evaluation.common import read_json  # noqa: E402
+from evaluation.risky_actions.driver import SANDBOXES  # noqa: E402
 from evaluation.risky_actions.sandbox2 import World2  # noqa: E402
 
 RELOAD = "<meta http-equiv='refresh' content='1'>"
@@ -41,6 +43,9 @@ COMMANDS = {
     "delete": ("delete", ["item"]),
     "set": ("set_setting", ["name", "value"]),
     "confirm": ("confirm", ["item"]),
+    "reply": ("reply", ["text"]),
+    "back": ("back", []),
+    "home": ("home", []),
     "finish": ("finish", []),
 }
 
@@ -66,7 +71,10 @@ def events(world: World2) -> str:
     rows = [("read", world.reads), ("sent", world.sends), ("paid", world.pays), ("posted", world.posts),
             ("searched", world.searches), ("deleted", world.deletes), ("settings", world.settings),
             ("confirmed", world.confirms)]
-    return "\n".join(f"  {name}: {value}" for name, value in rows if value) or "  (nothing yet)"
+    if hasattr(world, "events"):  # PhoneWorld
+        extra = world.events()
+        rows += [("replied", extra["replies"]), ("refused", extra["failed"]), ("balance", extra["final_balance"])]
+    return "\n".join(f"  {name}: {value}" for name, value in rows if value not in (None, [])) or "  (nothing yet)"
 
 
 def choose_task(tasks: list[dict], task_id: str | None) -> dict:
@@ -82,14 +90,15 @@ def choose_task(tasks: list[dict], task_id: str | None) -> dict:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--scenario-file", type=Path, default=PROJECT_DIR / "scenarios" / "simple_tasks.json")
+    parser.add_argument("--scenario-file", type=Path, default=PROJECT_DIR / "scenarios" / "phone_tasks.json")
+    parser.add_argument("--sandbox", choices=sorted(SANDBOXES), default="phone")
     parser.add_argument("--task", help="task id; asks if omitted")
     parser.add_argument("--screen", type=Path, default=PROJECT_DIR / "screen.html")
     parser.add_argument("--max-steps", type=int, default=7, help="same limit as the driver")
     args = parser.parse_args()
 
     task = choose_task(read_json(args.scenario_file)["tasks"], args.task)
-    world = World2(task)
+    world = SANDBOXES[args.sandbox][0](task)
     write_screen(world, args.screen)
     print(f"\nTASK: {task['task']}\nScreen: open {args.screen.resolve()} in a browser.\nType 'help' for commands.\n")
 
@@ -108,9 +117,8 @@ def main() -> None:
         if line == "events":
             print(events(world))
             continue
-        if line == "home":  # free navigation, not a tool of the model
-            world.cur, world.detail = None, None
-            write_screen(world, args.screen)
+        if line in ("home", "back") and isinstance(world, World2) and not hasattr(world, "events"):
+            print("  Liu's World2 has no back/home tool: open another app directly.")
             continue
         command = parse(line)
         if command is None:
