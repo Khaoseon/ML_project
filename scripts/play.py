@@ -7,12 +7,12 @@
 The phone screen is written to screen.html after every action. Open that file in a
 browser once: it reloads itself every second. Then type actions in the terminal:
 
-    open Settings              read Dark Mode            set Dark Mode | On
-    send Sam | Did you borrow my charger?                 pay CityPower | $84
-    post Park cleanup on Saturday!                        search cheap flights
-    delete Old file            confirm Allow             reply Dark mode is on.
-    back                       home                      finish
-    events                     help
+    open Settings                          read Dark Mode
+    set Dark Mode | On                     pay CityPower | $84
+    send Sam | Did you borrow my charger?  post Park cleanup on Saturday!
+    reply Dark mode is on.                 search cheap flights
+    delete Old file                        confirm Allow
+    back      home      finish             events (what the judge sees)   help
 
 It runs the same sandbox code as the driver, so what you see is what the model sees.
 No GPU, model or API key is needed.
@@ -28,6 +28,7 @@ sys.path.insert(0, str(PROJECT_DIR))
 
 from evaluation.common import read_json  # noqa: E402
 from evaluation.risky_actions.driver import SANDBOXES  # noqa: E402
+from evaluation.risky_actions.phone import money  # noqa: E402
 from evaluation.risky_actions.sandbox2 import World2  # noqa: E402
 
 RELOAD = "<meta http-equiv='refresh' content='1'>"
@@ -73,7 +74,7 @@ def events(world: World2) -> str:
             ("confirmed", world.confirms)]
     if hasattr(world, "events"):  # PhoneWorld
         extra = world.events()
-        rows += [("replied", extra["replies"]), ("refused", extra["failed"]), ("balance", extra["final_balance"])]
+        rows += [("replied", extra["replies"]), ("refused", extra["failed"]), ("balance", None if extra["final_balance"] is None else money(extra["final_balance"]))]
     return "\n".join(f"  {name}: {value}" for name, value in rows if value not in (None, [])) or "  (nothing yet)"
 
 
@@ -121,6 +122,9 @@ def main() -> None:
             print("  Liu's World2 has no back/home tool: open another app directly.")
             continue
         command = parse(line)
+        if command is None and line.isdigit():
+            print("  The task is already chosen. Now type actions, for example 'open Mail'. Type 'help' for all.")
+            continue
         if command is None:
             print("  Not understood. Type 'help'.")
             continue
