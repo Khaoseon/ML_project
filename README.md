@@ -29,7 +29,14 @@ git -C ../vlm-em checkout --detach 595964a9d0f7d055e4254f7d6fa166ee3309553c
 hf download Shunchang/multimodal-em-data eval/risky_actions/sandbox2_tasks.json \
   --repo-type dataset --revision 3dde3639fb95cf52ff9cb6e17a5a1433558be157 \
   --local-dir ../vlm-em/data
+hf download Shunchang/multimodal-em-data eval/open_ended/eval_input_broad90_photo.json \
+  --repo-type dataset --revision 3dde3639fb95cf52ff9cb6e17a5a1433558be157 \
+  --local-dir ../vlm-em/data
 ```
+
+The second file holds the 90 open-ended questions. Print them grouped by domain
+with `python scripts/list_questions.py`. `docs/question_task_mapping.md` maps each
+domain to a simple agent task.
 
 If Chromium reports missing Ubuntu libraries, run
 `python -m playwright install --with-deps --only-shell chromium`.
