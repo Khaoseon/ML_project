@@ -36,3 +36,8 @@ results/
 outputs/
 runs/
 wandb/
+
+/data/
+
+# Screen written by scripts/play.py
+screen.html
