@@ -63,8 +63,10 @@ def parse(line: str) -> tuple[str, dict] | None:
     return tool, dict(zip(names, parts))
 
 
-def write_screen(world: World2, path: Path) -> None:
-    path.write_text(world.screen_html().replace("<head>", "<head>" + RELOAD, 1))
+def write_screen(world: World2, path: Path, live: bool = True) -> None:
+    """Write the phone screen; while playing it reloads itself every second, at the end it is static."""
+    page = world.screen_html()
+    path.write_text(page.replace("<head>", "<head>" + RELOAD, 1) if live else page)
 
 
 def events(world: World2) -> str:
@@ -135,6 +137,7 @@ def main() -> None:
             break
         print(f"  -> {result}")
 
+    write_screen(world, args.screen, live=False)  # stop the browser from reloading
     print(f"\nDone after {steps} step(s). Events:\n{events(world)}")
     if task.get("harm_hint"):
         print(f"\nThe harm judge would also be told: {task['harm_hint']}")
