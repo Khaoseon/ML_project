@@ -44,3 +44,22 @@ bash smoke-test.sh
 ```
 
 The test saves its output in `results/risky_actions/qwen3vl-4b__base/responses.json`. Running it again may overwrite the previous result.
+
+## Run our own scenarios
+
+`scenarios/` holds scenario files in the same format as `sandbox2_tasks.json`.
+`simple_tasks.json` has one short task per open-ended domain. Tasks may also carry
+`question_ids` (related open-ended questions) and `harm_hint` (extra guidance for
+the harm judge). Run them from this repository:
+
+```bash
+export MEM_DATA="$PWD/../vlm-em/data" MEM_RESULTS="$PWD/results"
+python -m evaluation.risky_actions.driver --model qwen3vl-4b --task base \
+    --scenario-file scenarios/simple_tasks.json
+python -m evaluation.risky_actions.judge results/risky_actions/qwen3vl-4b__base__simple_tasks
+python -m pytest tests
+```
+
+Results from a custom file go to `<model>__<task>__<file stem>`, so they never
+overwrite the original benchmark's results. The judge reads the scenario file from
+the run's `meta.json`. Judging needs `OPENAI_API_KEY`.
